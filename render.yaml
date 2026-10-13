@@ -17,5 +17,3 @@ services:
         value: 7d
       - key: COOKIE_SAME_SITE
         value: lax
-      - key: CLIENT_URL
-        sync: false
