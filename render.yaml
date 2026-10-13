@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: invoice-manager
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: COOKIE_SAME_SITE
+        value: lax
+      - key: CLIENT_URL
+        sync: false
