@@ -216,9 +216,66 @@ npm run test:coverage
 
 ---
 
+## 🐳 Docker & Containerization
+
+The application supports both **unified multi-stage production containerization** and **multi-container microservice orchestration via Docker Compose**:
+
+### 1. Multi-Container Orchestration (Docker Compose)
+Launches the React frontend (Nginx reverse proxy), Express backend API, and a local MongoDB 6.0 instance:
+
+```bash
+docker compose up --build
+```
+* **Frontend (Nginx)**: `http://localhost:80`
+* **Backend API**: `http://localhost:5000`
+* **MongoDB**: `localhost:27017` (persisted in `mongo-data` volume)
+
+### 2. Production Docker Builds
+
+```bash
+# Build unified multi-stage production container (React + Express in one image)
+docker build -t invoice-manager:latest .
+
+# Run unified production container
+docker run -p 5000:5000 -e MONGO_URI="<your-mongo-uri>" -e JWT_SECRET="<your-jwt-secret>" invoice-manager:latest
+
+# Build standalone backend container
+docker build -t invoice-manager-backend ./server
+
+# Build standalone frontend container (Nginx + React)
+docker build -t invoice-manager-frontend ./client
+```
+
+---
+
+## 🚀 CI/CD Pipeline & Automated Render Deployment
+
+The repository includes a production-grade GitHub Actions pipeline ([.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml)) containing three stages:
+
+```
+[ Push to main ] ──> [ 1. Automated Tests ] ──> [ 2. Docker Builds ] ──> [ 3. Render Deploy ]
+                     - Server Vitest (22)       - Unified Image          - Auto-Deploy /
+                     - Client Vitest (18)       - Backend Container        Deploy Hook
+                     - Playwright E2E (3)       - Frontend Container
+```
+
+1. **Automated Tests (`test`)**:
+   * Spins up a native MongoDB 6.0 service container.
+   * Runs Server Unit & Integration tests (`vitest` + `supertest`).
+   * Runs Client Component tests (`vitest` + React Testing Library).
+   * Runs Playwright End-to-End browser tests.
+2. **Container Verification (`docker-build`)**:
+   * Verifies that the multi-stage production Dockerfile and standalone images build cleanly without caching errors.
+3. **Automated Render Deployment (`deploy`)**:
+   * Triggers automatically when changes are merged into `main`.
+   * **Zero-Setup Mode**: If your Render service has **Auto-Deploy: Yes**, Render automatically pulls and redeploys the commit.
+   * **Gated CI/CD Mode (Recommended)**: In Render Dashboard $\rightarrow$ **Settings** $\rightarrow$ copy your **Deploy Hook** URL. Add it to GitHub repository secrets as `RENDER_DEPLOY_HOOK_URL`. The GitHub Actions workflow will trigger the deployment only after all tests and Docker builds succeed.
+
+---
+
 ## 💼 Resume Highlight
 
-> *"Architected a comprehensive multi-tier automated test suite achieving robust test coverage across React & Express using **Vitest**, **React Testing Library**, **Supertest**, and **Playwright E2E**, fully automated with a **GitHub Actions CI** pipeline."*
+> *"Architected a comprehensive multi-tier automated test suite achieving robust test coverage across React & Express using **Vitest**, **React Testing Library**, **Supertest**, and **Playwright E2E**, with **Docker multi-stage containerization**, **Docker Compose**, and an automated **GitHub Actions CI/CD** deployment pipeline to **Render**."*
 
 ---
 

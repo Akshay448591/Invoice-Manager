@@ -1,0 +1,129 @@
+name: CI/CD Pipeline & Automated Deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Root Dependencies
+        run: npm ci || npm install
+
+      - name: Install Server Dependencies
+        run: cd server && (npm ci || npm install)
+
+      - name: Install Client Dependencies
+        run: cd client && (npm ci || npm install)
+
+      - name: Run Server Unit & Integration Tests (Vitest)
+        run: npm run test:server
+        env:
+          TEST_MONGO_URI: mongodb://localhost:27017/test_invoice
+          JWT_SECRET: test_jwt_secret_ci_key_123456
+
+      - name: Run Client Component & Unit Tests (Vitest)
+        run: npm run test:client
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run End-to-End Tests (Playwright)
+        run: npm run test:e2e
+        env:
+          PORT: 5000
+          MONGO_URI: mongodb://localhost:27017/test_invoice_e2e
+          JWT_SECRET: test_jwt_secret_ci_key_123456
+          CLIENT_URL: http://localhost:5173
+
+      - name: Upload Playwright Test Report on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  docker-build:
+    name: Build & Validate Docker Containers
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Unified Production Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: invoice-manager:latest
+
+      - name: Build Standalone Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: false
+          tags: invoice-manager-backend:latest
+
+      - name: Build Standalone Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile
+          push: false
+          tags: invoice-manager-frontend:latest
+
+  deploy:
+    name: Deploy to Render
+    needs: [test, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$DEPLOY_HOOK" ]; then
+            echo "🚀 Triggering Render Deployment Hook..."
+            response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$DEPLOY_HOOK")
+            http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d':' -f2)
+            if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+              echo "✅ Render deployment successfully triggered! (Status: $http_status)"
+            else
+              echo "❌ Render deployment hook failed with status: $http_status"
+              echo "$response"
+              exit 1
+            fi
+          else
+            echo "ℹ️ RENDER_DEPLOY_HOOK_URL secret not set in repository settings."
+            echo "ℹ️ If Render is set to 'Auto-Deploy: Yes', Render will deploy directly from the pushed commit."
+            echo "ℹ️ (Optional) To gate deployments strictly to green test runs, add RENDER_DEPLOY_HOOK_URL to GitHub Secrets."
+          fi
