@@ -26,13 +26,13 @@ module.exports = defineConfig({
       command: "node server/server.js",
       url: "http://localhost:5000/api/health",
       reuseExistingServer: !process.env.CI,
-      timeout: 30000,
+      timeout: 60000,
     },
     {
       command: "npm run dev --prefix client",
       url: "http://localhost:5173",
       reuseExistingServer: !process.env.CI,
-      timeout: 30000,
+      timeout: 60000,
     },
   ],
 });

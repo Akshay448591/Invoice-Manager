@@ -13,12 +13,18 @@ process.env.NODE_ENV = "test";
 let mongoServer;
 
 beforeAll(async () => {
-  const baseUri = process.env.TEST_MONGO_URI || process.env.MONGO_URI;
-  if (baseUri) {
-    // Use an isolated test database so production/dev data is never touched
-    const testUri = baseUri.includes("?")
-      ? baseUri.replace(/\/[^/?]+(\?)/, "/test_invoice_db$1")
-      : `${baseUri}/test_invoice_db`;
+  let testUri = process.env.TEST_MONGO_URI;
+
+  if (!testUri && process.env.MONGO_URI) {
+    const base = process.env.MONGO_URI;
+    if (base.includes("?")) {
+      testUri = base.replace(/\/[^/?]+(\?)/, "/test_invoice_db$1");
+    } else {
+      testUri = base.replace(/\/([^/]*)$/, "/test_invoice_db");
+    }
+  }
+
+  if (testUri) {
     await mongoose.connect(testUri);
   } else {
     const { MongoMemoryServer } = await import("mongodb-memory-server");
