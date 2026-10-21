@@ -51,4 +51,4 @@ quoteSchema.pre("validate", function (next) {
   next();
 });
 
-module.exports = mongoose.model("Quote", quoteSchema);
+module.exports = mongoose.models.Quote || mongoose.model("Quote", quoteSchema);

@@ -76,4 +76,4 @@ invoiceSchema.virtual("displayStatus").get(function () {
   return this.status;
 });
 
-module.exports = mongoose.model("Invoice", invoiceSchema);
+module.exports = mongoose.models.Invoice || mongoose.model("Invoice", invoiceSchema);

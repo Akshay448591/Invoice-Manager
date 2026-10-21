@@ -184,6 +184,44 @@ Render will automatically:
 
 ---
 
+## 🧪 Automated Testing & Quality Assurance
+
+This repository implements a **multi-tier testing pyramid** covering Unit, Integration, and End-to-End (E2E) testing with automated CI/CD integration:
+
+| Layer | Tools | Scope & Coverage |
+| :--- | :--- | :--- |
+| **Backend Unit & Integration** | **Vitest** + **Supertest** + **Isolated MongoDB** | Document sequence generator, line-item totals, tax calculation, auth/JWT cookies, RBAC, tenant isolation, PDF streaming. |
+| **Frontend Component & Unit** | **Vitest** + **React Testing Library** + **JSDOM** | Currency/date formatting utilities, `StatusBadge`, `EmptyState`, and `ProtectedRoute` role navigation guards. |
+| **End-to-End (E2E)** | **Playwright** (Chromium) | Full real-browser flows: User registration, login/logout, route protection guards, client creation, drafting invoices with line items, and list views. |
+| **Continuous Integration (CI)** | **GitHub Actions** (`test.yml`) | Automated build & multi-suite test validation on every push and pull request. |
+
+### Running Tests
+
+```bash
+# Run all unit and integration tests (Client + Server)
+npm test
+
+# Run backend tests only (Vitest + Supertest)
+npm run test:server
+
+# Run frontend tests only (Vitest + React Testing Library)
+npm run test:client
+
+# Run End-to-End tests (Playwright browser automation)
+npm run test:e2e
+
+# Run with test coverage reports
+npm run test:coverage
+```
+
+---
+
+## 💼 Resume Highlight
+
+> *"Architected a comprehensive multi-tier automated test suite achieving robust test coverage across React & Express using **Vitest**, **React Testing Library**, **Supertest**, and **Playwright E2E**, fully automated with a **GitHub Actions CI** pipeline."*
+
+---
+
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).

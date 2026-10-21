@@ -10,4 +10,4 @@ const counterSchema = new mongoose.Schema({
 
 counterSchema.index({ owner: 1, key: 1 }, { unique: true });
 
-module.exports = mongoose.model("Counter", counterSchema);
+module.exports = mongoose.models.Counter || mongoose.model("Counter", counterSchema);

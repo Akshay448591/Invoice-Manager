@@ -19,3 +19,10 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 Thumbs.db
+
+# Test artifacts
+coverage/
+client/coverage/
+server/coverage/
+playwright-report/
+test-results/
