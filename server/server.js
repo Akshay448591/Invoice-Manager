@@ -1,3 +1,4 @@
+require("./tracing");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 require("dotenv").config();
@@ -5,6 +6,8 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
+const { correlationIdMiddleware, httpLogger } = require("./utils/logger");
+const { metricsMiddleware, metricsHandler } = require("./utils/metrics");
 
 const app = express();
 
@@ -14,8 +17,17 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
+app.use(correlationIdMiddleware);
+app.use(httpLogger);
+app.use(metricsMiddleware);
 app.use(express.json());
 app.use(cookieParser());
+
+// Observability: Prometheus metrics endpoint
+app.get("/api/metrics", metricsHandler);
+
+// Observability: Health, Liveness, and Readiness probes
+app.use("/api/health", require("./routes/healthRoutes"));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/clients", require("./routes/clientRoutes"));
@@ -40,8 +52,6 @@ app.use(
   resourceRouter(require("./controllers/paymentController")),
 );
 app.use("/api/portal", require("./routes/portalRoutes")); // client portal
-
-app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {

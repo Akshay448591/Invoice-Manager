@@ -234,5 +234,15 @@ exports.streamDocumentPdf = (res, { type, doc, business, download }) => {
       .text(d.notes, 50, y + 13, { width: 495 });
   }
 
+  const { pdfGenerationDurationSeconds } = require("./metrics");
+  const startTime = process.hrtime();
+  res.on("finish", () => {
+    const diff = process.hrtime(startTime);
+    pdfGenerationDurationSeconds.observe(
+      { document_type: type },
+      diff[0] + diff[1] / 1e9,
+    );
+  });
+
   pdf.end();
 };

@@ -273,9 +273,24 @@ The repository includes a production-grade GitHub Actions pipeline ([.github/wor
 
 ---
 
+## 🔭 Observability & Telemetry
+
+The platform implements the **Three Pillars of Observability** (Logs, Metrics, Traces) alongside deep health monitoring:
+
+| Capability | Tool / Standard | Details |
+| :--- | :--- | :--- |
+| **Structured Logging** | **Pino** (`pino-http`) | High-throughput JSON logs with ISO timestamps, error stacks, and configurable log levels (`LOG_LEVEL`). |
+| **Correlation IDs** | `X-Request-Id` (UUID v4) | Generates and propagates a correlation ID across incoming requests, database operations, and HTTP response headers. |
+| **Prometheus Metrics** | **`prom-client`** (`/api/metrics`) | Exposes standard Prometheus metrics: Node.js runtime (CPU, heap memory, event loop lag) + HTTP RED metrics + custom business metrics (invoices created, revenue processed, PDF generation duration). |
+| **Health Probes** | `/api/health`, `/live`, `/ready` | Production-grade probes: `/api/health/live` (process uptime & memory) and `/api/health/ready` (active MongoDB connection verification). |
+| **Distributed Tracing** | **OpenTelemetry (OTel)** | OpenTelemetry NodeSDK auto-instrumenting Express routes and outgoing HTTP requests with standard W3C `traceparent` headers. |
+| **Frontend Error Telemetry** | React `ErrorBoundary` | Catches uncaught client rendering exceptions and automatically reports crash telemetry to `/api/health/telemetry/errors`. |
+
+---
+
 ## 💼 Resume Highlight
 
-> *"Architected a comprehensive multi-tier automated test suite achieving robust test coverage across React & Express using **Vitest**, **React Testing Library**, **Supertest**, and **Playwright E2E**, with **Docker multi-stage containerization**, **Docker Compose**, and an automated **GitHub Actions CI/CD** deployment pipeline to **Render**."*
+> *"Architected an enterprise-grade full-stack platform with a **multi-tier test suite** (Vitest, React Testing Library, Supertest, Playwright E2E), complete **Observability** (Pino structured logging with Correlation IDs, Prometheus RED metrics, OpenTelemetry distributed tracing, and deep liveness/readiness probes), **Docker multi-stage containerization**, and an automated **GitHub Actions CI/CD** pipeline deploying directly to **Render**."*
 
 ---
 

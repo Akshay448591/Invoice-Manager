@@ -10,7 +10,22 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error(error, info);
+    console.error("ErrorBoundary caught an exception:", error, info);
+    try {
+      if (typeof window !== "undefined" && window.fetch) {
+        window.fetch("/api/health/telemetry/errors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            error: { message: error?.message, stack: error?.stack },
+            info: info?.componentStack,
+            url: window.location.href,
+          }),
+        }).catch(() => {});
+      }
+    } catch {
+      // Ignore network errors in error boundary
+    }
   }
 
   render() {

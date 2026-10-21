@@ -10,6 +10,8 @@ const POPULATE = [
   { path: "project", select: "name" },
 ];
 
+const { invoicesCreatedTotal } = require("../utils/metrics");
+
 const handlers = crud(Invoice, {
   fields: ["client", "project", "issueDate", "dueDate", "items", "notes"],
   populate: POPULATE,
@@ -17,6 +19,9 @@ const handlers = crud(Invoice, {
   beforeCreate: async (req) => ({
     number: await nextNumber(req.user._id, "invoice", "INV"),
   }),
+  afterSave: async (invoice) => {
+    invoicesCreatedTotal.inc({ status: invoice.status || "draft" });
+  },
   canUpdate: (invoice) =>
     ["paid", "cancelled"].includes(invoice.status)
       ? "Paid or cancelled invoices cannot be edited"
